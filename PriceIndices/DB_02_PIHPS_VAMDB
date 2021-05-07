@@ -1,0 +1,81 @@
+set more off
+clear
+
+use "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan.dta", replace
+
+replace MarketName="Pasar " + MarketName if Province=="RIAU" & MarketName!="Pasar Senggol"
+
+replace a2code=9403 if MarketName=="Pasar Baru Sentani"
+replace a2code=9403 if MarketName=="Pasar Lama Sentani"
+replace a2code=8102 if MarketName=="Pasar Langgur"
+replace a2code=6502 if MarketName=="Pasar Agro Politan"
+replace a2code=6502 if MarketName=="Pasar Induk Tj Selor"
+replace a2code=3172 if MarketName=="Pasar Jatinegara"
+replace a2code=3172 if MarketName=="Pasar Kramatjati"
+replace a2code=3171 if MarketName=="Pasar Minggu" & Province=="DKI JAKARTA"
+replace a2code=1406 if MarketName=="Pasar Sukaramai" & Province=="RIAU"
+
+replace MarketName="Pasar Besar-baru" if MarketName=="Pasar Besar" & a2code==3573
+
+
+merge m:1 MarketName a2code using "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\marketname.dta"
+
+replace A2NAME = "Kab. " + A2NAME if !strpos(A2NAME, "Kota ")
+
+replace MarketName="Pasar Besar" if MarketName=="Pasar Besar-baru" & a2code==3573
+replace MarketName="Pasar Dinoyo" if MarketName=="Pasar Dinoyo - Baru" & a2code==3573
+
+
+replace MarketName="Pasar Bejen (Kab. Karanganyar)" if MarketName=="Pasar Bejen Kab. Karanganyar"
+replace MarketName="Pasar Jungke (Kab. Karanganyar)" if MarketName=="Pasar Jungke Kab. Karanganyar"
+replace MarketName="Pasar Kota Boyolali (Kab. Boyolali)" if MarketName=="Pasar Kota Boyolali Kab. Boyolali"
+replace MarketName="Pasar Sunggingan (Kab. Boyolali)" if MarketName=="Pasar Sunggingan Kab. Boyolali"
+
+gen d=0
+
+foreach key in "Anyar" "Baru" "Besar" "Gede" "Legi" "Minggu" "Pagi" "Sentral" "Sukaramai" "Tanjung" {
+  	 display "`key'"
+  	replace MarketName= MarketName + " (" + A2NAME + ")" if strpos(MarketName, "`key'") 
+  	replace d= 1 if strpos(MarketName, "`key'") 
+
+  	}
+
+drop Province District
+order MarketName MarketNameDB Commodity_ID Commodity_EN date Date Year Month month Day PriceType Price_o Price c_Price Unit Period Currency DataSource A1CODE A1NAME a2code A2NAME A3CODE A3NAME A4CODE A4NAME
+ren a2code A2CODE
+drop _merge d
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan_DB.dta", replace
+
+replace Commodity_EN=subinstr(Commodity_EN," II)",")",.)
+replace Commodity_EN=subinstr(Commodity_EN," I)",")",.)
+
+replace Commodity_ID=subinstr(Commodity_ID," II","",.)
+replace Commodity_ID=subinstr(Commodity_ID," I","",.)
+replace Commodity_ID=subinstr(Commodity_ID," 1","",.)
+replace Commodity_ID=subinstr(Commodity_ID," 2","",.)
+
+collapse (mean) Price Price_o, by(MarketName MarketNameDB Commodity_ID Commodity_EN date Date Year Month month Day PriceType Unit Period Currency DataSource A1CODE A1NAME A2CODE A2NAME A3CODE A3NAME A4CODE A4NAME)
+
+/*outsheet using "/Users/dibyanta/Documents/WFP/Work/Food price/April/price_market_trad_daily_1620_apr.csv", replace*/
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan_DB.dta", replace 
+use "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan_DB.dta", replace
+
+
+replace Commodity_EN=subinstr(Commodity_EN,"Onion ","Onions ",.)
+replace Commodity_EN=subinstr(Commodity_EN,"Onionss ","Onions ",.)
+replace Commodity_EN=subinstr(Commodity_EN,"red","shallot",.) if strpos(Commodity_EN,"Onions")
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan_DB.dta", replace 
+
+keep MarketName Commodity_EN Year month Day date PriceType Price_o Unit Period Currency DataSource *NAME
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan_DB_abridged.dta", replace
+
+export delimited using "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan_DB_abridged.csv", replace
+
+*export excel using "E:\Alika\price_market_trad_daily_1620_jul_DB_abridged.xls", firstrow(variables) replace
+e
+
+use "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan_DB_abridged.dta", replace
