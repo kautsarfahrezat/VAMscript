@@ -1,0 +1,184 @@
+
+clear
+set more off
+
+insheet using "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\hargapanganid_2021_01.csv", clear
+
+/*Drop the duplicate value*/
+
+drop id
+sort date
+tab commodity_en
+br if commodity_en=="NULL"
+
+duplicates report
+duplicates tag, g(dup)
+tab dup
+br if dup>0
+sort date province district market commodity_code
+br date commodity province district market price if dup > 0
+
+duplicates drop
+drop dup
+
+/*Drop the missing value*/
+
+drop if price==. | market=="-"
+
+/*rename the commodity name*/
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\market_price_indo_nodup_2021_jan.dta", replace
+
+use "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\market_price_indo_nodup_2021_jan.dta", replace
+
+replace commodity_en="Rice" if commodity=="Beras"
+replace commodity_en="Rice (low quality I)" if commodity=="Beras Kualitas Bawah I"
+replace commodity_en="Rice (low quality II)" if commodity=="Beras Kualitas Bawah II"
+replace commodity_en="Rice (medium quality I)" if commodity=="Beras Kualitas Medium I"
+replace commodity_en="Rice (medium quality II)" if commodity=="Beras Kualitas Medium II"
+replace commodity_en="Rice (high quality I)" if commodity=="Beras Kualitas Super I"
+replace commodity_en="Rice (high quality II)" if commodity=="Beras Kualitas Super II"
+replace commodity_en="Meat (chicken)" if commodity=="Daging Ayam"
+replace commodity_en="Meat (chicken, broiler)" if commodity=="Daging Ayam Ras Segar"
+replace commodity_en="Meat (beef)" if commodity=="Daging Sapi"
+replace commodity_en="Meat (beef, first quality)" if commodity=="Daging Sapi Kualitas 1"
+replace commodity_en="Meat (beef, second quality)" if commodity=="Daging Sapi Kualitas 2"
+replace commodity_en="Eggs" if commodity=="Telur Ayam"
+replace commodity_en="Eggs (broiler)" if commodity=="Telur Ayam Ras Segar"
+replace commodity_en="Onion (red)" if commodity=="Bawang Merah"
+replace commodity_en="Onion (red, medium)" if commodity=="Bawang Merah Ukuran Sedang"
+replace commodity_en="Garlic" if commodity=="Bawang Putih"
+replace commodity_en="Garlic (medium)" if commodity=="Bawang Putih Ukuran Sedang"
+replace commodity_en="Chili (red)" if commodity=="Cabai Merah"
+replace commodity_en="Chili (red, large)" if commodity=="Cabai Merah Besar"
+replace commodity_en="Chili (red, curly)" if commodity=="Cabai Merah Keriting"
+replace commodity_en="Chili (bird's eye)" if commodity=="Cabai Rawit"
+replace commodity_en="Chili (bird's eye, green)" if commodity=="Cabai Rawit Hijau"
+replace commodity_en="Chili (bird's eye, red)" if commodity=="Cabai Rawit Merah"
+replace commodity_en="Oil (vegetable)" if commodity=="Minyak Goreng"
+replace commodity_en="Oil (vegetable, bulk)" if commodity=="Minyak Goreng Curah"
+replace commodity_en="Oil (vegetable, packaged I)" if commodity=="Minyak Goreng Kemasan Bermerk 1"
+replace commodity_en="Oil (vegetable, packaged II)" if commodity=="Minyak Goreng Kemasan Bermerk 2"
+replace commodity_en="Sugar" if commodity=="Gula Pasir"
+replace commodity_en="Sugar (premium)" if commodity=="Gula Pasir Kualitas Premium"
+replace commodity_en="Sugar (local)" if commodity=="Gula Pasir Lokal"
+
+ren commodity_code com_code
+destring com_code, replace force
+
+replace com_code=1100 if commodity=="Beras"
+replace com_code=1101 if commodity=="Beras Kualitas Bawah I"
+replace com_code=1102 if commodity=="Beras Kualitas Bawah II"
+replace com_code=1103 if commodity=="Beras Kualitas Medium I"
+replace com_code=1104 if commodity=="Beras Kualitas Medium II"
+replace com_code=1105 if commodity=="Beras Kualitas Super I"
+replace com_code=1106 if commodity=="Beras Kualitas Super II"
+replace com_code=1200 if commodity=="Daging Ayam"
+replace com_code=1201 if commodity=="Daging Ayam Ras Segar"
+replace com_code=1300 if commodity=="Daging Sapi"
+replace com_code=1301 if commodity=="Daging Sapi Kualitas 1"
+replace com_code=1302 if commodity=="Daging Sapi Kualitas 2"
+replace com_code=1400 if commodity=="Telur Ayam"
+replace com_code=1401 if commodity=="Telur Ayam Ras Segar"
+replace com_code=1500 if commodity=="Bawang Merah"
+replace com_code=1501 if commodity=="Bawang Merah Ukuran Sedang"
+replace com_code=1600 if commodity=="Bawang Putih"
+replace com_code=1601 if commodity=="Bawang Putih Ukuran Sedang"
+replace com_code=1700 if commodity=="Cabai Merah"
+replace com_code=1701 if commodity=="Cabai Merah Besar"
+replace com_code=1702 if commodity=="Cabai Merah Keriting"
+replace com_code=1800 if commodity=="Cabai Rawit"
+replace com_code=1801 if commodity=="Cabai Rawit Hijau"
+replace com_code=1802 if commodity=="Cabai Rawit Merah"
+replace com_code=1900 if commodity=="Minyak Goreng"
+replace com_code=1901 if commodity=="Minyak Goreng Curah"
+replace com_code=1902 if commodity=="Minyak Goreng Kemasan Bermerk 1"
+replace com_code=1903 if commodity=="Minyak Goreng Kemasan Bermerk 2"
+replace com_code=2000 if commodity=="Gula Pasir"
+replace com_code=2001 if commodity=="Gula Pasir Kualitas Premium"
+replace com_code=2002 if commodity=="Gula Pasir Lokal"
+
+gen unit= "KG"
+
+gen mkt_type_code = 1 if !strpos(market,"Modern")
+replace mkt_type_code = 2 if strpos(market,"Modern")
+
+gen date_ = date(date,"DMY")
+
+gen year = year(date_)
+gen month = month(date_)
+gen day = day(date_)
+
+duplicates drop
+
+save, replace
+
+drop com_code
+
+/* sumber masalah
+keep if mkt_type_code == 1
+
+drop mkt_type_code
+*/
+
+ren market MarketName
+ren province Province
+ren district District
+ren commodity Commodity_ID
+ren commodity_en Commodity_EN
+ren year Year
+ren date_ Date
+ren day Day
+ren unit Unit
+ren price Price
+
+gen Month="Jan" if month==1
+replace Month="Feb" if month==2
+replace Month="Mar" if month==3
+replace Month="Apr" if month==4
+replace Month="May" if month==5
+replace Month="Jun" if month==6
+replace Month="Jul" if month==7
+replace Month="Aug" if month==8
+replace Month="Sep" if month==9
+replace Month="Oct" if month==10
+replace Month="Nov" if month==11
+replace Month="Dec" if month==12
+
+gen Period="Daily"
+gen PriceType="Retail"
+gen Currency="IDR"
+gen DataSource="Bank Indonesia (Indonesian Central Bank)"
+
+order Prov Dist Market Comm* Month Date Year PriceType Price Unit Period Currency Data
+
+drop type
+
+duplicates drop
+
+destring a2code, replace force
+gsort -date
+bysort District : replace a2code = a2code[_n-1] if missing(a2code) 
+
+sort Prov Dist Market Commodity_EN Year month Date
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_1.dta", replace
+
+replace Commodity_EN=subinstr(Commodity_EN,"Oninons","Onion",.)
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan.dta", replace
+
+use "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan.dta", clear
+
+by District MarketName Commodity_EN (Year month Day), sort: gen double c_Price = (Price - Price[_n-1]) / Price[_n-1] * 100
+
+gen Price_o = Price
+
+by District MarketName Commodity_EN (Year month Day), sort: replace Price = (Price[_n-1] + Price[_n+1])/2 if c_Price>100 & c_Price!=. & !strpos(Commodity_ID,"Cabai") & Year==2021
+
+save "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan.dta", replace
+
+e
+
+use "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan.dta", replace
+export delimited using "C:\Users\kautsar.tandipanga\OneDrive - World Food Programme\Documents\Price\price_market_trad_daily_2021_jan.csv", replace
